@@ -68,6 +68,7 @@ set(SOURCE_FILES
         src/luascript.cpp
         src/main.cpp
         src/memory.cpp
+        src/MetricsLogger.cpp
         src/mos6502.cpp
         src/midiemu.cpp
         src/native2amiga.cpp

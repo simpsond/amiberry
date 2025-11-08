@@ -14,6 +14,8 @@
 #include <cstdio>
 #include <cmath>
 #include <iostream>
+#include <chrono>
+#include <ctime>
 
 #include "sysdeps.h"
 #include "options.h"
@@ -37,6 +39,7 @@
 #include "gfxboard.h"
 #include "statusline.h"
 #include "devices.h"
+#include "MetricsLogger.hpp"
 
 #include "threaddep/thread.h"
 #include "vkbd/vkbd.h"
@@ -95,6 +98,10 @@ static SDL_Surface* current_screenshot = nullptr;
 std::string screenshot_filename;
 FILE* screenshot_file = nullptr;
 int delay_savestate_frame = 0;
+
+// For FPS calculation
+static auto last_fps_time = std::chrono::high_resolution_clock::now();
+static int frame_count = 0;
 #endif
 
 static int deskhz;
@@ -1248,6 +1255,18 @@ void show_screen(const int monid, int mode)
 	SDL2_showframe(monid);
 #endif
 	mon->render_ok = false;
+
+	// FPS calculation
+	frame_count++;
+	const auto current_time = std::chrono::high_resolution_clock::now();
+	const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_fps_time).count();
+
+	if (elapsed_time >= 1000) {
+		const float fps = static_cast<float>(frame_count) / (static_cast<float>(elapsed_time) / 1000.0f);
+		MetricsLogger::get_instance().log_metric("fps", fps, "frames/sec");
+		frame_count = 0;
+		last_fps_time = current_time;
+	}
 }
 
 int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)

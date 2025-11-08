@@ -47,7 +47,7 @@
 #include "consolehook.h"
 #include "gfxboard.h"
 #ifdef WITH_LUA
-#include "luascript.h"
+ #include "luascript.h"
 #endif
 #include "cpuboard.h"
 #ifdef WITH_PPC
@@ -61,6 +61,7 @@
 #ifdef RETROPLATFORM
 #include "rp.h"
 #endif
+#include "MetricsLogger.hpp"
 
 #include <iostream>
 #if defined(__linux__)
@@ -1356,6 +1357,7 @@ static void start_program ()
 
 static void leave_program ()
 {
+	MetricsLogger::get_instance().shutdown();
 	do_leave_program ();
 }
 
@@ -1379,6 +1381,7 @@ void check_error_sdl(const bool check, const char* message)
 
 static int real_main2 (int argc, TCHAR **argv)
 {
+	MetricsLogger::get_instance().initialize("amiberry_metrics.log");
 	keyboard_settrans();
 	set_config_changed();
 	if (restart_config[0]) {
