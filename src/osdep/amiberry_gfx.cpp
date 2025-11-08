@@ -1222,6 +1222,11 @@ float target_adjust_vblank_hz(const int monid, float hz)
 
 void show_screen(const int monid, int mode)
 {
+	const auto render_start_time = std::chrono::high_resolution_clock::now();
+
+	// TEMP: Add a delay to simulate rendering regression and test FPS metric
+	sleep_millis(14);
+
 	AmigaMonitor* mon = &AMonitors[monid];
 	const amigadisplay* ad = &adisplays[monid];
 	struct apmode* ap = ad->picasso_on ? &currprefs.gfx_apmode[1] : &currprefs.gfx_apmode[0];
@@ -1267,6 +1272,10 @@ void show_screen(const int monid, int mode)
 		frame_count = 0;
 		last_fps_time = current_time;
 	}
+
+	const auto render_end_time = std::chrono::high_resolution_clock::now();
+	const auto render_duration = std::chrono::duration_cast<std::chrono::microseconds>(render_end_time - render_start_time).count();
+	MetricsLogger::get_instance().log_metric("render_time_ms", render_duration / 1000.0, "ms");
 }
 
 int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)

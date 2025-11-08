@@ -55,6 +55,8 @@
 #include "specialmonitors.h"
 #endif
 
+#include "MetricsLogger.hpp"
+
 #define VPOSW_DISABLED 0
 #define VPOSW_DEBUG 0
 
@@ -4972,6 +4974,8 @@ static void fpscounter(bool frameok)
 // it can line 0 or even later.
 static void vsync_handler_render(void)
 {
+	const auto loop_start_time = std::chrono::high_resolution_clock::now();
+
 	struct amigadisplay *ad = &adisplays[0];
 
 #if 1
@@ -5074,6 +5078,7 @@ static bool vsync_display_rendered;
 static void vsync_display_render(void)
 {
 	if (!vsync_display_rendered) {
+		const auto loop_start_time = std::chrono::high_resolution_clock::now();
 		vsyncmintimepre = read_processor_time();
 
 		if (!custom_disabled) {
@@ -5088,6 +5093,16 @@ static void vsync_display_render(void)
 			start_draw_denise();
 		}
 		vsync_display_rendered = true;
+		const auto loop_end_time = std::chrono::high_resolution_clock::now();
+		const auto loop_duration = std::chrono::duration_cast<std::chrono::microseconds>(loop_end_time - loop_start_time).count();
+
+		const auto frame_interval = 1000000.0 / vblank_hz;
+		const auto idle_time = frame_interval - loop_duration;
+
+		MetricsLogger::get_instance().log_metric("loop_time_ms", loop_duration / 1000.0, "ms");
+		if (idle_time > 0) {
+			MetricsLogger::get_instance().log_metric("idle_time_ms", idle_time / 1000.0, "ms");
+		}
 	}
 }
 
